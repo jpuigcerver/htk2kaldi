@@ -1,2 +1,5 @@
 # htk2kaldi
-Convert HMMs from HTK to Kaldi
+Convert a HMM/GMM model file from HTK to Kaldi format.
+
+WARNING: The script assumes that no transition / emission parameters are
+shared.
