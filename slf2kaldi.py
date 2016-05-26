@@ -80,4 +80,4 @@ if __name__ == '__main__':
         O.add(int(S))
 
     for n in N.difference(O):
-        print n, '0,0'
+        print n, '0,0,'
