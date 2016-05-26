@@ -74,7 +74,7 @@ if __name__ == '__main__':
         assert S is not None, err_msg('Expected field S', args.input, lnum)
         assert E is not None, err_msg('Expected field E', args.input, lnum)
         assert W is not None, err_msg('Expected field W', args.input, lnum)
-        print S, E, W, '%g,%g' % (l + n, a)
+        print S, E, W, '%g,%g,%s' % (l + n, a, W)
         N.add(int(S))
         N.add(int(E))
         O.add(int(S))
