@@ -257,25 +257,57 @@ class HTKParser(object):
             # Read number of mixtures
             assert self._next(), 'Unexpected EOF'
             m = re.match('^<NUMMIXES> ([0-9]+)$', self._line)
-            assert m, self._msg('Expected "<NUMMIXES> %%d"')
-            num_mixes = int(m.group(1))
-            assert num_mixes > 0, self._msg('Invalid number of mixtures')
-            # Process all <MIXTURE>s
             gmm = GMM()
-            read_mixes = True
-            while read_mixes:
-                # Read mixture weight
+            if not m:
+                ## Special case: 1 Gaussian
+                num_mixes = 1
+                weight = 1.0
+                # Check <MEAN>
+                m = re.match('^<MEAN> %d$' % self._model.dimension, self._line)
+                assert m, self._msg('Expected "<MEAN> %d"' % \
+                                    self._model.dimension)
+                # Read mean vector
                 assert self._next(), 'Unexpected EOF'
-                m = re.match('^<MIXTURE> \d+ (%s)$' % REGEX_FLOAT, self._line)
-                if not m:
-                    read_mixes = False
-                else:
+                mean = tuple([float(x) for x in self._line.split()])
+                assert len(mean) == self._model.dimension, \
+                    self._msg('Invalid mean vector')
+                # Check <VARIANCE>
+                assert self._next(), 'Unexpected EOF'
+                m = re.match('^<VARIANCE> %d$' % self._model.dimension,
+                             self._line)
+                assert m, self._msg('Expected "<VARIANCE> %d"' % \
+                                    self._model.dimension)
+                # Read variance vector
+                assert self._next(), 'Unexpected EOF'
+                var = tuple([ float(x) for x in self._line.split() ])
+                assert len(var) == self._model.dimension, \
+                    self._msg('Invalid variance vector')
+                # Read Gconst. It is not used, since it can be obtained from
+                # the mean and the variance vectors.
+                assert self._next(), 'Unexpected EOF'
+                m = re.match('^<GCONST> (%s)$' % REGEX_FLOAT, self._line)
+                assert m, self._msg('Expected "<GCONST> %%f"')
+                # Add mixture to the gmm
+                gmm.add_mixture(mean, var, weight)
+                assert self._next(), 'Unexpected EOF'
+            else:
+                ## General case, Gaussian Mixture Model
+                num_mixes = int(m.group(1))
+                assert num_mixes > 0, self._msg('Invalid number of mixtures')
+                # Process all <MIXTURE>s
+                while True:
+                    # Read mixture weight
+                    assert self._next(), 'Unexpected EOF'
+                    m = re.match('^<MIXTURE> \d+ (%s)$' % REGEX_FLOAT,
+                                 self._line)
+                    if not m: break
                     weight = float(m.group(1))
                     assert weight > 0.0 and weight <= 1.0, \
                         self._msg('Invalid mixture weight')
                     # Check <MEAN>
                     assert self._next(), 'Unexpected EOF'
-                    m = re.match('^<MEAN> %d$' % self._model.dimension, self._line)
+                    m = re.match('^<MEAN> %d$' % self._model.dimension,
+                                 self._line)
                     assert m, self._msg('Expected "<MEAN> %d"' % \
                                         self._model.dimension)
                     # Read mean vector
